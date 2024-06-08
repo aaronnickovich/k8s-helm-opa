@@ -1,0 +1,59 @@
+ingresses:
+  enabled: true
+  hosts:
+    - name: opa
+      host: localhost
+      path: '/'
+      service:
+        name: opa
+        port: 8181
+secrets:
+  enabled: false
+configMap:
+  enabled: true
+  configs:
+    - name: example-policy
+      data:
+        example.rego: "package example\r\n\r\ngreeting := msg {\r\n    info := opa.runtime()\r\n
+          \   hostname := info.env[\"HOSTNAME\"] # Kubernetes sets the HOSTNAME environment
+          variable.\r\n    msg := sprintf(\"hello from pod %q!\", [hostname])\r\n}\r\n"
+deployments:
+  enabled: true
+  apps:
+    - name: opa
+      replicas: 1
+      repository: openpolicyagent/opa
+      tag: 0.65.0
+      pullPolicy: Always
+      containerPort: 8181
+      args:
+        - "run"
+        - "--ignore=.*"  # exclude hidden dirs created by Kubernetes
+        - "--server"
+        - "/policies"
+
+        #        - "run"
+        # - "--server"
+        # - "--log-format=json-pretty"
+        # - "--set=decision_logs.console=true"
+        # - "--set=services.nginx.url=http://bundle_server"
+        # - "--set=bundles.nginx.service=nginx"
+        # - "--set=bundles.nginx.resource=bundles/bundle.tar.gz"
+      volumes:
+        enabled: true
+        secretVolume:
+          enabled: false
+        ephemeralVolume:
+          enabled: false
+        configMap:
+          enabled: true
+          name: example-policy
+          mountPath: /policies
+services:
+  enabled: true
+  backends:
+    - name: opa
+      ports:
+        ingressPort: 80
+        containerPort: 8181
+createReleaseNamespace: false
