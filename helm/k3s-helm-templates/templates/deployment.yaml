@@ -1,0 +1,192 @@
+{{- if .Values.deployments.enabled }}
+  {{- range .Values.deployments.apps }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace}}
+  labels:
+    app.kubernetes.io/name: {{ .labelName | default .name }}
+    helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    {{- with .labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .replicas }}
+  revisionHistoryLimit: {{ default 2 .revisionHistoryLimit }}
+  {{- if .progressDeadlineSeconds }}
+  progressDeadlineSeconds: {{ .progressDeadlineSeconds }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .labelName | default .name }}
+      {{- with .labels }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .labelName | default .name }}
+        {{- with .labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+        - name: {{ .labelName | default .name }}
+          image: "{{ .repository }}:{{ .tag }}"
+          imagePullPolicy: {{ .pullPolicy }}
+          {{- if .command }}
+          command:
+          {{- with .command }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if .args }}
+          args:
+          {{- with .args }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 30"]
+          {{- if .env }}
+          env:
+          {{- with .env }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .containerPort }}
+              protocol: TCP
+          {{- if and .livenessProbe .livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .livenessProbe.httpGet }}
+            httpGet:
+              path: {{ default "/livenessprobe" .livenessProbe.httpGet.path }}
+              port: {{ default 8080 .livenessProbe.httpGet.port }}
+            {{- else }}
+            httpGet:
+              path: "/livenessprobe"
+              port: 8080
+            {{- end }}
+            initialDelaySeconds: {{ default 30 .livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 30 .livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ default 1 .livenessProbe.timeoutSeconds }}
+            successThreshold: {{ default 1 .livenessProbe.successThreshold }}
+            failureThreshold: {{ default 3 .livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if and .readinessProbe .readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .readinessProbe.httpGet }}
+            httpGet:
+              path: {{ default "/health" .readinessProbe.httpGet.path }}
+              port:  {{ default 8080 .readinessProbe.httpGet.port }}
+            {{- else }}
+            httpGet:
+              path: "/health"
+              port: 8080
+            {{- end }}
+            initialDelaySeconds: {{ default 30 .readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 30 .readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ default 1 .readinessProbe.timeoutSeconds }}
+            successThreshold: {{ default 1 .readinessProbe.successThreshold }}
+            failureThreshold: {{ default 3 .readinessProbe.failureThreshold }}
+          {{- end }}
+          {{- if and .startupProbe .startupProbe.enabled }}
+          startupProbe:
+            {{- if .startupProbe.httpGet }}
+            httpGet:
+              path: {{ default "/health" .startupProbe.httpGet.path }}
+              port:  {{ default 8080 .startupProbe.httpGet.port }}
+            {{- else }}
+            httpGet:
+              path: "/health"
+              port: 8080
+            {{- end }}
+            initialDelaySeconds: {{ default 30 .startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 30 .startupProbe.periodSeconds }}
+            timeoutSeconds: {{ default 1 .startupProbe.timeoutSeconds }}
+            successThreshold: {{ default 1 .startupProbe.successThreshold }}
+            failureThreshold: {{ default 3 .startupProbe.failureThreshold }}
+          {{- end }}
+          {{- if and .volumes .volumes.enabled }}
+          volumeMounts:
+             {{- if .volumes.configMap.enabled }}
+             - name: config-volume
+               mountPath: {{ .volumes.configMap.mountPath }}
+             {{- end }}
+             {{- if .volumes.ephemeralVolume.enabled }}
+             - name: {{ .volumes.ephemeralVolume.name }}
+               mountPath: {{ .volumes.ephemeralVolume.mountPath }}
+             {{- end }}
+             {{- if .volumes.secretVolume.enabled }}
+             - name: {{ .volumes.secretVolume.name }}
+               mountPath: {{ .volumes.secretVolume.mountPath }}
+             {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+      {{- if and .volumes .volumes.enabled }}
+      volumes:
+        {{- if .volumes.configMap.enabled }}
+        - name: config-volume
+          configMap:
+            name:  {{ .volumes.configMap.name }}
+        - name: configdir
+          emptyDir: {}
+        {{- end }}
+        {{- if .volumes.ephemeralVolume.enabled }}
+        - name: {{ .volumes.ephemeralVolume.name }}
+          emptyDir: {}
+        {{- end }}
+        {{- if .volumes.secretVolume.enabled }}
+        - name: {{ .volumes.secretVolume.name }}
+          secret:
+            secretName:  {{ .volumes.secretVolume.name }}
+        {{- end }}
+      {{- end }}
+      {{- with .nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .topologySpreadConstraints }}
+      {{- with .topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- else }}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ .labelName | default .name }}
+      {{- end }}
+      {{- with .tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      dnsPolicy: {{ default "ClusterFirst" .dnsPolicy }}
+      restartPolicy: {{ default "Always" .restartPolicy }}
+      schedulerName: {{ default "default-scheduler" .schedulerName }}
+      terminationGracePeriodSeconds: {{ default 30 .terminationGracePeriodSeconds }}
+      dnsConfig:
+        options:
+          - name: ndots
+            {{- if and .dnsConfig .dnsConfig.ndots }}
+            value: "{{ default 2 .dnsConfig.ndots }}"
+            {{- else }}
+            value: "2"
+            {{- end }}
+---
+{{- end }}
+{{- end }}

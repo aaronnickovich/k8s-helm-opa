@@ -1,0 +1,11 @@
+ingresses:
+  enabled: false
+deployments:
+  enabled: false
+secrets:
+  enabled: false
+services:
+  enabled: false
+configMap:
+  enabled: false
+createReleaseNamespace: false

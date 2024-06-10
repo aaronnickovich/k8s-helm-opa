@@ -1,0 +1,19 @@
+{{- if .Values.configMap.enabled }}
+  {{- range .Values.configMap.configs }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace}}
+  labels:
+    helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+    {{- with .labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+{{- range $path, $config := .data }}
+  {{ $path }}: |
+{{ $config | indent 4 -}}
+{{- end -}}
+{{- end}}
+{{- end}}

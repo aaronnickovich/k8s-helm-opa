@@ -1,0 +1,21 @@
+{{- if .Values.services.enabled }}
+{{- range .Values.services.backends }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .labelName | default .name }}
+    helm.sh/chart: "{{ $.Chart.Name }}-{{ $.Chart.Version }}"
+spec:
+  selector:
+    app.kubernetes.io/name: {{ .labelName | default .name }}
+  ports:
+    - name: http
+      port: {{ .ports.ingressPort }}
+      protocol: TCP
+      targetPort: {{ .ports.containerPort }}
+---
+{{- end -}}
+{{- end -}}

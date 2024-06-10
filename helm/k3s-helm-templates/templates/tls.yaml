@@ -1,0 +1,17 @@
+{{- if .Values.secrets.enabled -}}
+{{- range .Values.secrets.tls -}}
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ .labelName | default .name }}
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+data:
+{{- with .data }}
+{{- toYaml . | nindent 2 }}
+{{- end }}
+---
+{{- end }}
+{{- end }}
