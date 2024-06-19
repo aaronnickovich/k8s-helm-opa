@@ -31,7 +31,9 @@ deployments:
         - "--ignore=.*"  # exclude hidden dirs created by Kubernetes
         - "--server"
         - "/policies"
-
+      #      env:
+        #  - name: APP_VERSION 
+      #    value: "1.0.0"
         #        - "run"
         # - "--server"
         # - "--log-format=json-pretty"
