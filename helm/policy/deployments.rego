@@ -18,7 +18,7 @@ warn_app_version_env_variable_must_be_present[msg] {
     msg := sprintf("'%v' env variable must be preset once", ["APP_VERSION"])
 }
 
-deny[msg] {
+deny_no_matching_service[msg] {
   input[i].contents.kind == "Deployment"
 
   deployment := input[i].contents
@@ -29,12 +29,12 @@ deny[msg] {
 }
 
 
-deny[msg] {
+deny_root_or_escalated_privileges[msg] {
   input[i].contents.kind == "Deployment"
 
   deployment := input[i].contents
 
-  not security_context(deployment.spec.securityContext)
+  not security_context(deployment.spec.securityContext, deployment)
 
   msg := "Containers must not run as root or with escalated privileges"
 }
@@ -44,7 +44,8 @@ service_selects_app(app) {
   input[service].contents.spec.selector.app == app
 }
 
-security_context(context) {
-  context.runAsNonRoot
-  context.allowPrivilegeEscalation
+security_context(context, deployment) {
+  context.runAsNonRoot == true
+  security_context := [contexts | contexts := deployment.spec.template.spec.containers[_].securityContext; contexts.allowPrivilegeEscalation == true]
+  count(security_context) < 1
 }
