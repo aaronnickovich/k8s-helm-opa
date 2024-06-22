@@ -18,7 +18,7 @@ spec:
   progressDeadlineSeconds: {{ .progressDeadlineSeconds }}
   {{- end }}
   securityContext:
-    runAsNonRoot: false
+    runAsNonRoot: true
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .labelName | default .name }}
