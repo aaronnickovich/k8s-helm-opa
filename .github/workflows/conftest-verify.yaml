@@ -3,7 +3,7 @@ name: Conftest Verify
 on:
   pull_request:
     paths:
-      - '/helm/policy/**.rego'
+      - 'helm/policy/**'
     branches: 
       - main
 
