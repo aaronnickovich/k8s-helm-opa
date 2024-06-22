@@ -20,4 +20,4 @@ jobs:
         id: install
       - name: Validate conftest policies
         working-directory: ./helm
-        run: helm template 0.1.0 k3s-helm-templates --values .\values.yaml | conftest test - --combine -n "labels","podEnv","secContext","service"
+        run: helm template 0.1.0 k3s-helm-templates --values values.yaml | conftest test - --combine --trace -n "labels","podEnv","secContext","service"
