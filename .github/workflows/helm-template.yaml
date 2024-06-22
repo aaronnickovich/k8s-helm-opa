@@ -2,8 +2,6 @@ name: Helm template
 
 on:
   pull_request:
-    paths-ignore:
-      - '/helm/policy/**'
     branches: 
       - main
 
