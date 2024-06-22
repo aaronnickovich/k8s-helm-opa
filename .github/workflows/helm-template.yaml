@@ -1,0 +1,23 @@
+name: Helm template
+
+on:
+  pull_request:
+    paths-ignore:
+      - '/helm/policy/**'
+    branches: 
+      - main
+
+jobs:
+  helm-verify:
+    runs-on: ubuntu-latest
+    container: openpolicyagent/conftest:latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v3
+      - uses: azure/setup-helm@v4.2.0
+        with:
+          version: 'latest' # default is latest (stable)
+        id: install
+      - name: Validate conftest policies
+        working-directory: ./helm
+        run: helm template 0.1.0 k3s-helm-templates --values .\values.yaml | conftest test - --combine -n "labels","podEnv","secContext","service"
