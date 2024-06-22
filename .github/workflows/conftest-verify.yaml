@@ -1,0 +1,19 @@
+name: Conftest Verify
+
+on:
+  pull_request:
+    paths:
+      - '/helm/policy/**_test.rego'
+    branches: 
+      - main
+
+jobs:
+  conftest:
+    runs-on: ubuntu-latest
+    container: openpolicyagent/conftest:latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v3
+      - name: Validate conftest policies
+        working-directory: ./helm
+        run: conftest verify
