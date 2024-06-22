@@ -1,7 +1,7 @@
 package labels
 
-required_labels = ["app.kubernetes.io/name", "helm.sh/chart", "app.kubernetes.io/managed-by","app.kubernetes.io/instance"]
-optional_labels = ["app.kubernetes.io/version", "app.kubernetes.io/component", "app.kubernetes.io/part-of"]
+required_labels = ["app.kubernetes.io/name", "helm.sh/chart", "app.kubernetes.io/managed-by"]
+optional_labels = ["app.kubernetes.io/version", "app.kubernetes.io/component", "app.kubernetes.io/part-of","app.kubernetes.io/instance"]
 
 deny[msg] {
   kind = input.kind
