@@ -1,4 +1,4 @@
-name: Helm template
+name: OPA CI
 
 on:
   pull_request:
@@ -6,6 +6,16 @@ on:
       - main
 
 jobs:
+  conftest-verify:
+    runs-on: ubuntu-latest
+    container: openpolicyagent/conftest:latest
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v3
+      - name: Validate conftest policies
+        working-directory: ./helm
+        run: conftest verify
+
   helm-verify:
     runs-on: ubuntu-latest
     container: openpolicyagent/conftest:latest
