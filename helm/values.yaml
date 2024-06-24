@@ -52,5 +52,10 @@ deployments:
           name: example-policy
           mountPath: /policies
 services:
-  enabled: false
+  enabled: true
+  backends:
+    - name: NOOP
+      ports:
+        ingressPort: 80
+        containerPort: 8181
 createReleaseNamespace: false
