@@ -54,7 +54,7 @@ deployments:
 services:
   enabled: true
   backends:
-    - name: NOOP
+    - name: opa
       ports:
         ingressPort: 80
         containerPort: 8181
