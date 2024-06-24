@@ -16,7 +16,7 @@ test_blank_input {
 }
 
 test_not_warn_pod_env {
-    input := [{"contents":{"kind":"Deployment","spec":{"template":{"spec":{"containers":[{"env":[{"name":"APP_VERSION","value": "1.0.0"}]}]}}}}}]
+    input := [{"contents":{"kind":"Deployment","spec":{"template":{"spec":{"containers":[{"env":[{"name":"APP_VERSION","value": ""}]}]}}}}}]
 	no_violations with input as input
 }
 
