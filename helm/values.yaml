@@ -52,10 +52,5 @@ deployments:
           name: example-policy
           mountPath: /policies
 services:
-  enabled: true
-  backends:
-    - name: opa
-      ports:
-        ingressPort: 80
-        containerPort: 8181
+  enabled: false
 createReleaseNamespace: false
